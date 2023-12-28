@@ -1,7 +1,7 @@
 Package: bdsvd
 Type: Package
 Title: Block structure detection using singular vectors
-Version: 0.0.0.9000
+Version: 1.0
 Authors@R: c(
     person("Jan O.", "Bauer", email = "j.bauer@vu.nl", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7123-4507")),
     person("Ron", "Holzapfel", email = "", role = "aut"))
