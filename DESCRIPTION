@@ -1,0 +1,19 @@
+Package: bdsvd
+Type: Package
+Title: Block structure detection using singular vectors
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Jan O.", "Bauer", email = "j.bauer@vu.nl", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7123-4507")),
+    person("Ron", "Holzapfel", email = "", role = "aut"))
+Description: Performs block diagonal covariance matrix detection using singular vectors.
+License: GPL (>= 2)
+Imports: cvCovEst, irlba, methods, mvtnorm, stats
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Author: Jan O. Bauer [aut, cre],
+  Ron Holzapfel [cre]
+Maintainer: Jan O. Bauer <j.bauer@vu.nl>
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
