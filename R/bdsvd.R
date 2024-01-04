@@ -645,6 +645,8 @@ result.bdsvd <- function(X,
 
   if(class(block.structure) != "bdsvd"){stop("block.structure must be the outcome of bdsvd() or iterative.bdsvd().")}
 
+  if(length(colnames(X)) == 0){colnames(X) <- as.character(1:p)}
+
   b <- length(block.structure)
   ifelse(missing(block.order),
          block.order <- 1:length(block.structure),
