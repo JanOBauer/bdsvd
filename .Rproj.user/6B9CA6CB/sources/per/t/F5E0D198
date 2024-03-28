@@ -3,7 +3,7 @@
     "path": "~/Documents/GitHub/bdsvd/R/bdsvd.R",
     "project_path": "R/bdsvd.R",
     "type": "r_source",
-    "hash": "1793167620",
+    "hash": "2121800998",
     "contents": "",
     "dirty": false,
     "created": 1702400488730.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "382,10",
-        "scrollLine": "371"
+        "cursorPosition": "261,35",
+        "scrollLine": "251"
     },
-    "folds": "",
-    "lastKnownWriteTime": 1703759540,
+    "folds": "52|54|58|0|\n60|45|74|0|\n",
+    "lastKnownWriteTime": 1711560914,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1703759540564,
+    "last_content_update": 1711560914717,
     "read_only": false,
     "read_only_alternatives": []
 }

@@ -13,15 +13,15 @@ get.blocks <- function(threshold.matrix, feature.names){
   blocks <- list()
 
   if (any(colSums(threshold.matrix == 0) == p)) {
-    stop("Zero column. Reduce regularization and/or threshold value.\n")
+    stop("Zero column. Reduce threshold value.\n")
   }
 
   if (any(rowSums(threshold.matrix == 0) == k)) {
     if(k < p){
-      stop("Zero row. Add more loadings, or reduce regularization and/or threshold value.\n")
+      stop("Zero row. Add more loadings, or reduce threshold value.\n")
     }
     else{
-      stop("Zero row. Reduce regularization and/or threshold value.\n")
+      stop("Zero row. Reduce threshold value.\n")
     }
 
   }
@@ -48,15 +48,6 @@ get.blocks <- function(threshold.matrix, feature.names){
   }
 
   return(blocks)
-}
-
-get.feature.names <- function(X) {
-  feature.names <- colnames(X)
-  if (length(feature.names) <= 0) {
-    feature.names <- seq_len(ncol(X))
-  }
-
-  return(feature.names)
 }
 
 get.threshold.matrix <- function(loadings, threshold){
@@ -98,51 +89,188 @@ setClass("Block", slots = c(features = "vector", block.columns = "vector"))
 
 
 
-#' @title Covariance matrix simulation
+#' @title Block Detection Using Singular Vectors (BD-SVD).
 #'
-#' @description This function generates covariance matrices based on the simulation studies described in Bauer (202X).
+#' @description Performs BD-SVD iteratively to reveal the block structure. Splits the data matrix into one (i.e., no split)
+#' or two submatrices, depending on the structure of the first sparse loading \eqn{v} (which is a sparse approximation of the
+#' first right singular vector, i.e., a vector with many zero values) that mirrors the shape of the covariance matrix. This
+#' procedure is continued iteratively until the block diagonal structure has been revealed.
+#'
+#' The data matrix ordered according to this revealed block diagonal structure can be obtained by \link{bdsvd.structure}.
+#'
+#' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
+#'
+#' @param dof.lim Interval limits for the number of non-zero components in the sparse loading (degrees of freedom).
+#' If \eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
+#' corresponds to the degrees of freedom. Default is \code{dof.lim <- c(0, p-1)} which is highly recommended to check for
+#' all levels of sparsity.
+#'
+#'@param standardize Standardize the data to have unit variance. Default is \code{TRUE}.
+#'
+#' @param max.iter How many iterations should be performed for computing the sparse loading.
+#' Default is \code{200}.
+#'
+#' @param trace Print out progress as iterations are performed. Default is \code{TRUE}.
+#'
+#' @details
+#' The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
+#' the \code{irlba} package.
+#'
+#' @return
+#' A list containing the feature names of the submatrices of \code{X}. The length of the list equals
+#' the number of submatrices.
+#'
+#' @seealso \link{bdsvd.structure}, \link{bdsvd.ht}, \link{single.bdsvd}
+#'
+#' @references \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+#'
+#' @examples
+#' #Replicate the simulation study (c) from Bauer (202Xa).
+#'
+#' p <- 500 #Number of variables
+#' n <- 250 #Number of observations
+#' b <- 10  #Number of blocks
+#' design <- "c" #Simulation design "a", "b", "c", or "d".
+#'
+#' #Simulate data matrix X
+#' set.seed(1)
+#' Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+#' X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
+#' colnames(X) <- 1:p
+#'
+#' bdsvd(X, standardize = FALSE)
+#'
+#' @importFrom irlba ssvd
+#'
+#' @export
+bdsvd <- function(X,
+                  dof.lim,
+                  standardize = TRUE,
+                  max.iter,
+                  trace = FALSE
+) {
+
+  if(anyNA(X)){stop("X contains missing value indicator (NA)")}
+
+  n <- nrow(X)
+  p <- ncol(X)
+
+  if(length(colnames(X)) == 0){colnames(X) <- as.character(seq_len(p))}
+
+  if(missing(dof.lim)){ dof.lim <- c(0,p-1) }
+  dof.lim <- sort(round(dof.lim))
+  if(dof.lim[1] < 0){ dof.lim[1] <- 0 }
+  if(dof.lim[2] > p-1){ dof.lim[2] <- p-1 }
+
+  if(missing(max.iter)){max.iter <- 500}
+
+  sub.matrices <- list(colnames(X))
+  results <- list()
+
+  b <- 1
+  while (TRUE) {
+    if (length(sub.matrices) == 0) {
+      break  #Stop when splitting is no longer supported
+    }
+
+    if(length(sub.matrices[[1]]) == 1){
+      if(trace){
+        cat("Block", b,":", sub.matrices[[1]],"\n",sep="\t")
+      }
+      b <- b+1
+      results <- c(results, sub.matrices[[1]])
+      sub.matrices <- sub.matrices[-1]
+      next
+    }
+
+    dof.split <- bdsvd.ht(X = X[, colnames(X) %in% sub.matrices[[1]] ],
+                          dof.lim = dof.lim,
+                          standardize = standardize,
+                          max.iter = max.iter)$dof
+    sub.results <- single.bdsvd(X = X[, colnames(X) %in% sub.matrices[[1]] ], standardize = standardize, dof = dof.split)
+
+
+    if(length(sub.matrices) == 1){
+      sub.matrices <- list()
+    } else{
+      sub.matrices <- sub.matrices[-1]
+    }
+
+    if(length(sub.results) == 1){
+      if(trace){
+        cat("Block", b,":", sub.results[[1]],"\n",sep="\t")
+      }
+      b <- b+1
+      results <- c(results, sub.results)
+    }else{
+      sub.matrices <- c(sub.matrices, sub.results)
+    }
+
+  }
+
+  results <- results[order(sapply(results, length), decreasing = TRUE)]
+  class(results) <- "bdsvd"
+  return(results)
+
+}
+
+
+
+#' @title Covariance matrix simulation for BD-SVD
+#'
+#' @description This function generates covariance matrices based on the simulation studies described in Bauer (202Xa).
 #'
 #' @param p Number of variables.
 #'
-#' @param b Number of blocks.
+#' @param b Number of blocks. Only required for simulation design "c" and "d".
 #'
 #' @param design Simulation design "a", "b", "c", or "d".
 #'
 #' @return
-#' A list containing the feature names of all detected blocks.
+#' A covariance matrix according to the chosen simulation design.
 #'
-#' @references
-#' Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
+#' @references \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
 #'
 #' @examples
 #' #The covariance matrix for simulation design (a) is given by
-#' Sigma <- cov.sim(p = 500, b = 500, design = "a")
+#' Sigma <- bdsvd.cov.sim(p = 500, b = 500, design = "a")
 #'
 #' @importFrom stats runif
 #'
 #' @export
-cov.sim <- function(p = p,
-                    b = b,
+bdsvd.cov.sim <- function(p = p,
+                    b,
                     design = design
-                    ){
+                    ) {
+
+  DESIGN <- c("a", "b", "c", "d")
+  if (!(design %in% DESIGN))
+    stop("invalid design", paste("", design))
+
   if(design == "a"){
     Sigma <- diag(1, p, p)
     return(Sigma)
   }
 
   if(design == "b"){
-    Sigma <- diag(runif(p, 1, 5), p, p)
+    Sigma <- diag(stats::runif(p, 1, 5), p, p)
     return(Sigma)
   }
 
   if(design == "c"){
+    if(missing(b))
+      stop("Number of blocks b required for simulation design c.")
+
+    if (!(p %% b == 0))
+      stop("p must be divisible by b so that blocks of equal size can be created.")
+
     rho0 <- 0.2
     epsilon <- 0.1
 
     d <- p/b
     Sigma <- matrix(0, p, p)
     for(i in 1:b){
-      rho <- runif(1, rho0-epsilon, rho0+epsilon)
+      rho <- stats::runif(1, rho0-epsilon, rho0+epsilon)
       Sigma[(1 + d*(i-1)):(d + d*(i-1)), (1 + d*(i-1)):(d + d*(i-1))] <-
         ( (1-rho) * diag(1,d, d) + 2* rho * rep(1,d)%*%t(rep(1,d))   )
     }
@@ -150,6 +278,11 @@ cov.sim <- function(p = p,
   }
 
   if(design == "d"){
+    if(missing(b))
+      stop("Number of blocks b required for simulation design d.")
+    if (!(p %% b == 0))
+      stop("p must be divisible by b so that blocks of equal size can be created.")
+
     rho0 <- 0.45
     epsilon <- 0.15
     omega <- 0.1
@@ -157,7 +290,7 @@ cov.sim <- function(p = p,
     d <- p/b
     Sigma <- matrix(0, p, p)
     for(B in 1:b){
-      rho <- runif(1, rho0-epsilon, rho0+epsilon)
+      rho <- stats::runif(1, rho0-epsilon, rho0+epsilon)
       Rii <- matrix(0, d, d)
       for (i in 1:d) {
         for (j in 1:d) {
@@ -174,6 +307,196 @@ cov.sim <- function(p = p,
 
 
 
+#' @title Hyperparameter Tuning for BD-SVD
+#'
+#' @description Finds the number of non-zero elements of the sparse loading according to the high-dimensional
+#' Bayesian information criterion (HBIC).
+#'
+#' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
+#'
+#' @param dof.lim Interval limits for the number of non-zero components in the sparse loading (degrees of freedom).
+#' If \eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
+#' corresponds to the degrees of freedom. Default is \code{dof.lim <- c(0, p-1)} which is highly recommended to check for
+#' all levels of sparsity.
+#'
+#' @param standardize Standardize the data to have unit variance. Default is \code{TRUE}.
+#'
+#' @param max.iter How many iterations should be performed for computing the sparse loading.
+#' Default is \code{200}.
+#'
+#' @details
+#' The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
+#' the \code{irlba} package. The computation of the HBIC is outlined in Bauer (202Xa).
+#'
+#' @return
+#' \item{dof}{
+#'   The optimal number of nonzero components (degrees of freedom) according to the HBIC.
+#' }
+#' \item{BIC}{
+#'   The HBIC for the different numbers of nonzero components.
+#' }
+#'
+#' @seealso \link{bdsvd}, \link{single.bdsvd}
+#'
+#' @references \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+#' @references \cite{Shen, H. and Huang, J.Z. (2008). Sparse principal component analysis via regularized low rank matrix approximation, J. Multivar. Anal. 99, 1015–1034.}
+#'
+#' @examples
+#' #Replicate the illustrative example from Bauer (202Xa).
+#'
+#'
+#' p <- 300 #Number of variables. In Bauer (202Xa), p = 3000
+#' n <- 500 #Number of observations
+#' b <- 3   #Number of blocks
+#' design <- "c"
+#'
+#' #Simulate data matrix X
+#' set.seed(1)
+#' Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+#' X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
+#' colnames(X) <- 1:p
+#'
+#' ht <- bdsvd.ht(X)
+#' plot(0:(p-1), ht$BIC[,1], xlab = "|S|", ylab = "HBIC", main = "", type = "l")
+#' single.bdsvd(X, dof = ht$dof, standardize = FALSE)
+#'
+#' @importFrom irlba ssvd
+#'
+#' @export
+bdsvd.ht <- function(X,
+                     dof.lim,
+                     standardize = TRUE,
+                     max.iter
+) {
+
+  if(anyNA(X)){stop("X contains missing value indicator (NA)")}
+
+  n <- nrow(X)
+  p <- ncol(X)
+
+  if(missing(dof.lim)){ dof.lim <- c(0,p-1) }
+  dof.lim <- sort(round(dof.lim))
+  if(dof.lim[1] < 0){ dof.lim[1] <- 0 }
+  if(dof.lim[2] > p-1){ dof.lim[2] <- p-1 }
+  dof.grid <- dof.lim[1]:dof.lim[2]
+
+  X <- scale(X, center = TRUE, scale = standardize)
+
+  if(missing(max.iter)){max.iter <- 500}
+
+  BIC <- vector(length = length(dof.grid))
+  i <- 1
+  for(dof in dof.grid){
+
+    v <- tryCatch(suppressWarnings(irlba::ssvd(x = X, k = 1, n = p - dof, maxit = max.iter)$v), error = function(e) e)
+    if (inherits(v, "error")) {
+      v <- matrix(0, nrow = p, ncol = 1)
+    }
+
+    u <- X%*%v
+    BIC[i] <- log(norm(X - u%*%t(v), type = "F")^2/n/p) + sum(v!=0) * log(n*p)^(2/3)* log(log(n*p))/n/p * log(p)
+    i <- i + 1
+  }
+
+  dof <- dof.grid[order(BIC)[1]]
+  BIC <- cbind.data.frame(BIC)
+  rownames(BIC) <- dof.grid
+
+  return(list(dof = dof, BIC = BIC))
+}
+
+
+
+#' @title Data Matrix Structure According to the Detected Block Structure.
+#'
+#' @description Either sorts the data matrix \eqn{X} according to the detected block structure \eqn{X_1 , ... , X_b}, ordered by the number
+#' of variables that the blocks contain. Or returns the detected submatrices each individually in a list object.
+#'
+#' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
+#'
+#' @param block.structure A user supplied block structure based on \code{bdsvd()} or \code{single.bdsvd()}.
+#'
+#' @param output Should the output be the data matrix ordered according to the blocks (\code{"matrix"}), or
+#' a list containing the submatrices (\code{"submatrices"}). Default is \code{"matrix"}.
+#'
+#' @param block.order A vector that contains the order of the blocks detected by \code{bdsvd()} or \code{single.bdsvd()}.
+#' The vector must contain the index of each blocks exactly once. Default is \code{1:b} where \code{b} is the total number of blocks.
+#'
+#' @return
+#' Either the data matrix \code{X} with columns sorted according to the detected blocks, or a list containing the detected
+#' submatrices.
+#'
+#' @seealso \link{bdsvd}, \link{single.bdsvd}
+#'
+#' @references \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+#'
+#' @examples
+#' #Toying with the illustrative example from Bauer (202Xa).
+#'
+#'
+#' p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
+#' n <- 500 #Number of observations
+#' b <- 3   #Number of blocks
+#' design <- "c"
+#'
+#' #Simulate data matrix X
+#' set.seed(1)
+#' Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+#' X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
+#' colnames(X) <- 1:p
+#'
+#' #Compute iterative BD-SVD
+#' bdsvd.obj <- bdsvd(X, standardize = FALSE)
+#'
+#' #Obtain the data matrix X, sorted by the detected blocks
+#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "matrix") )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "matrix", block.order = c(2,1,3)) )
+#'
+#' #Obtain the detected submatrices X_1, X_2, and X_3
+#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[1]] )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[2]] )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[3]] )
+#'
+#' @export
+bdsvd.structure <- function(X,
+                            block.structure,
+                            output = "matrix",
+                            block.order
+){
+
+  if(class(block.structure) != "bdsvd")
+    stop("block.structure must be the outcome of bdsvd() or single.bdsvd().")
+
+  OUTPUT <- c("matrix", "submatrices")
+  if (!(output %in% OUTPUT))
+    stop("invalid command for output", paste("", output))
+
+  p <- ncol(X)
+  if(length(colnames(X)) == 0){colnames(X) <- as.character(1:p)}
+
+  b <- length(block.structure)
+  ifelse(missing(block.order),
+         block.order <- 1:length(block.structure),
+         block.order <- as.integer(block.order) )
+  if(!identical(sort(block.order), 1:b)){stop("block.order must contain the index of each block exactly once.")}
+
+  if(output == "matrix"){
+    result <- X[, colnames(X) %in% block.structure[[block.order[1]]] ]
+    for(i in block.order[-1]){
+      result <- cbind.data.frame(result,  X[, colnames(X) %in% block.structure[[i]] ])
+    }
+  } else{
+    result <- list()
+    for(i in block.order){
+      result <- c(result, list(X[, colnames(X) %in% block.structure[[block.order[i]]] ]) )
+    }
+  }
+
+  return(result)
+}
+
+
+
 #' @title Block Detection
 #'
 #' @description This function returns the block structure of a matrix.
@@ -183,21 +506,20 @@ cov.sim <- function(p = p,
 #' @param threshold All absolute values of \code{V} below the threshold are set to zero.
 #'
 #' @return
-#' An object of class Block containing the features and columns indices corresponding to each detected block.
+#' An object of class \code{Block} containing the features and columns indices corresponding to each detected block.
 #'
-#' @seealso \link{bdsvd}, \link{iterative.bdsvd}
+#' @seealso \link{bdsvd}, \link{single.bdsvd}
 #'
-#' @references
-#' Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
+#' @references \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
 #'
 #' @examples
 #' #In the first example, we replicate the simulation study for the ad hoc procedure
-#' #Est_0.1 in Bauer (202X). In the second example, we manually compute the first step
-#' #of BD-SVD, provided in the functions iterative.bdsvd() and/or bdsvd(), for constructed
+#' #Est_0.1 from Bauer (202Xa). In the second example, we manually compute the first step
+#' #of BD-SVD, which can be done using the bdsvd() and/or single.bdsvd(), for constructed
 #' #sparse loadings
 #'
-#' #Example 1: Replicate the simulation study (a) from Bauer (202X) for the ad hoc procedure Est_0.1.
-#' require(mvtnorm)
+#' #Example 1: Replicate the simulation study (a) from Bauer (202Xa) for the ad hoc
+#' #procedure Est_0.1.
 #'
 #' p <- 500 #Number of variables
 #' n <- 125 #Number of observations
@@ -206,18 +528,16 @@ cov.sim <- function(p = p,
 #'
 #' #Simulate data matrix X
 #' set.seed(1)
-#' Sigma <- cov.sim(p = p, b = b, design = design)
-#' X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
+#' Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+#' X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
 #' colnames(X) <- 1:p
 #'
 #' #Perform the ad hoc procedure
-#' require(cvCovEst)
-#' detect.blocks(scadEst(dat = X, lambda = 0.2), threshold = 0)
+#' detect.blocks(cvCovEst::scadEst(dat = X, lambda = 0.2), threshold = 0)
 #'
 #' #Example 2: Manually compute the first step of BD-SVD
 #' #for some loadings V that mirror the two blocks
 #' #("A", "B") and c("C", "D").
-#' require(mvtnorm)
 #'
 #' V <- matrix(c(1,0,
 #'               1,0,
@@ -251,11 +571,11 @@ detect.blocks <- function(V,
 
 
 
-#' @title Block detection using singular vectors (BD-SVD).
+#' @title Single Iteration of Block Detection Using Singular Vectors (BD-SVD).
 #'
 #' @description Performs a single iteration of BD-SVD: splits the data matrix into one (i.e., no split)
-#' or two submatrices, depending on the structure of the first sparse loading \eqn{v} (sparse
-#' approximation of the first right singular vector, i.e., has many zero values) that mirrors the
+#' or two submatrices, depending on the structure of the first sparse loading \eqn{v} (which is a sparse
+#' approximation of the first right singular vector, i.e., a vector with many zero values) that mirrors the
 #' shape of the covariance matrix.
 #'
 #' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
@@ -277,37 +597,34 @@ detect.blocks <- function(V,
 #' A list containing the feature names of the submatrices of \code{X}. It is either of length one (no
 #' split) or length two (split into two submatrices).
 #'
-#' @seealso \link{bdsvd.ht}, \link{iterative.bdsvd}
+#' @seealso \link{bdsvd}, \link{bdsvd.ht}
 #'
-#' @references
-#' Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
-#' Shen, H. and Huang, J.Z. (2008). \emph{Sparse principal component analysis via regularized low rank matrix approximation}, \emph{J. Multivar. Anal. 99, 1015–1034.}, <\doi{10.1016/j.jmva.2007.06.007}>\cr
+#' @references \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+#' @references \cite{Shen, H. and Huang, J.Z. (2008). Sparse principal component analysis via regularized low rank matrix approximation, J. Multivar. Anal. 99, 1015–1034.}
 #'
 #' @examples
-#' #Replicate the illustrative example from Bauer (202X).
+#' #Replicate the illustrative example from Bauer (202Xa).
 #'
-#' require(mvtnorm)
-#'
-#' p <- 300 #Number of variables. In Bauer (202X), p = 3000.
+#' p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
 #' n <- 500 #Number of observations
 #' b <- 3   #Number of blocks
 #' design <- "c"
 #'
 #' #Simulate data matrix X
 #' set.seed(1)
-#' Sigma <- cov.sim(p = p, b = b, design = design)
-#' X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
+#' Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+#' X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
 #' colnames(X) <- 1:p
 #'
 #' ht <- bdsvd.ht(X)
 #' plot(0:(p-1), ht$BIC[,1], xlab = "|S|", ylab = "HBIC", main = "", type = "l")
-#' bdsvd(X, dof = ht$dof, standardize = FALSE)
+#' single.bdsvd(X, dof = ht$dof, standardize = FALSE)
 #'
 #' @importFrom irlba ssvd
 #'
 #' @export
-bdsvd <- function(X,
-                  dof, #number of nonzero components
+single.bdsvd <- function(X,
+                  dof,
                   standardize = TRUE,
                   max.iter
                   ) {
@@ -321,10 +638,11 @@ bdsvd <- function(X,
   if(missing(max.iter)){max.iter <- 500}
 
   X <- scale(X, center = TRUE, scale = standardize)
-  feature.names <- get.feature.names(X = X)
+  if(length(colnames(X)) == 0){colnames(X) <- as.character(seq_len(p))}
+  feature.names <- colnames(X)
   eigen <- list()
 
-  v <- tryCatch(suppressWarnings(ssvd(x = X, k = 1, n = p - dof, maxit = max.iter)$v), error = function(e) e)
+  v <- tryCatch(suppressWarnings(irlba::ssvd(x = X, k = 1, n = p - dof, maxit = max.iter)$v), error = function(e) e)
   if (inherits(v, "error")) {
     stop("dof = ", dof, " do not fit the structure of the singular vectors. You can use bdsvd.ht to find a suitable value for dof.")
   }
@@ -344,329 +662,3 @@ bdsvd <- function(X,
 
   return(result)
 }
-
-
-
-#' @title Hyperparameter Tuning for BD-SVD
-#'
-#' @description Finds the number of non-zero elements of the sparse loading according to the high-dimensional
-#' Bayesian information criterion (HBIC).
-#'
-#' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
-#'
-#' @param dof.lim Interval limits for the number of non-zero components in the sparse loading (degrees of freedom).
-#' If \eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
-#' corresponds to the degrees of freedom. Default is \code{dof.lim <- c(0, p-1)} which is highly recommended to check for
-#' all levels of sparsity.
-#'
-#' @param standardize Standardize the data to have unit variance. Default is \code{TRUE}.
-#'
-#' @param max.iter How many iterations should be performed for computing the sparse loading.
-#' Default is \code{200}.
-#'
-#' @details
-#' The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
-#' the \code{irlba} package. The computation of the HBIC is outlined in Bauer (202X).
-#'
-#' @return
-#' \item{dof}{
-#'   The optimal number of nonzero components (degrees of freedom) according to the HBIC.
-#' }
-#' \item{BIC}{
-#'   The HBIC for the different numbers of nonzero components.
-#' }
-#'
-#' @seealso \link{bdsvd}, \link{iterative.bdsvd}
-#'
-#' @references
-#' Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
-#' Shen, H. and Huang, J.Z. (2008). \emph{Sparse principal component analysis via regularized low rank matrix approximation}, \emph{J. Multivar. Anal. 99, 1015–1034}, <\doi{10.1016/j.jmva.2007.06.007}>\cr
-#'
-#' @examples
-#' #Replicate the illustrative example from Bauer (202X).
-#'
-#' require(mvtnorm)
-#'
-#' p <- 300 #Number of variables. In Bauer (202X), p = 3000
-#' n <- 500 #Number of observations
-#' b <- 3   #Number of blocks
-#' design <- "c"
-#'
-#' #Simulate data matrix X
-#' set.seed(1)
-#' Sigma <- cov.sim(p = p, b = b, design = design)
-#' X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
-#' colnames(X) <- 1:p
-#'
-#' ht <- bdsvd.ht(X)
-#' plot(0:(p-1), ht$BIC[,1], xlab = "|S|", ylab = "HBIC", main = "", type = "l")
-#' bdsvd(X, dof = ht$dof, standardize = FALSE)
-#'
-#' @importFrom irlba ssvd
-#'
-#' @export
-bdsvd.ht <- function(X,
-                     dof.lim,
-                     standardize = TRUE,
-                     max.iter
-                     ) {
-
-  if(anyNA(X)){stop("X contains missing value indicator (NA)")}
-
-  n <- nrow(X)
-  p <- ncol(X)
-
-  if(missing(dof.lim)){ dof.lim <- c(0,p-1) }
-  dof.lim <- sort(round(dof.lim))
-  if(dof.lim[1] < 0){ dof.lim[1] <- 0 }
-  if(dof.lim[2] > p-1){ dof.lim[2] <- p-1 }
-  dof.grid <- dof.lim[1]:dof.lim[2]
-
-  X <- scale(X, center = TRUE, scale = standardize)
-
-  if(missing(max.iter)){max.iter <- 500}
-
-  BIC <- vector(length = length(dof.grid))
-  i <- 1
-  for(dof in dof.grid){
-
-    v <- tryCatch(suppressWarnings(ssvd(x = X, k = 1, n = p - dof, maxit = max.iter)$v), error = function(e) e)
-    if (inherits(v, "error")) {
-      v <- matrix(0, nrow = p, ncol = 1)
-    }
-
-    u <- X%*%v
-    BIC[i] <- log(norm(X - u%*%t(v), type = "F")^2/n/p) + sum(v!=0) * log(n*p)^(2/3)* log(log(n*p))/n/p * log(p)
-    i <- i + 1
-  }
-
-  dof <- dof.grid[order(BIC)[1]]
-  BIC <- cbind.data.frame(BIC)
-  rownames(BIC) <- dof.grid
-
-  return(list(dof = dof, BIC = BIC))
-}
-
-
-
-#' @title Iterative Block Detection Using Singular Vectors (BD-SVD).
-#'
-#' @description Performs BD-SVD iteratively to reveal the block structure. splits the data matrix into one (i.e., no split)
-#' or two submatrices, depending on the structure of the first sparse loading \eqn{v} (sparse
-#' approximation of the first right singular vector, i.e., has many zero values) that mirrors the
-#' shape of the covariance matrix. This procedure is continued iteratively until the block diagonal structure has been revealed.
-#'
-#' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
-#'
-#' @param dof.lim Interval limits for the number of non-zero components in the sparse loading (degrees of freedom).
-#' If \eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
-#' corresponds to the degrees of freedom. Default is \code{dof.lim <- c(0, p-1)} which is highly recommended to check for
-#' all levels of sparsity.
-#'
-#'@param standardize Standardize the data to have unit variance. Default is \code{TRUE}.
-#'
-#' @param max.iter How many iterations should be performed for computing the sparse loading.
-#' Default is \code{200}.
-#'
-#' @param trace Print out progress as iterations are performed. Default is \code{TRUE}.
-#'
-#' @details
-#' The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
-#' the \code{irlba} package.
-#'
-#' @return
-#' A list containing the feature names of the submatrices of \code{X}. The length of the list equals
-#' the number of submatrices.
-#'
-#' @seealso \link{bdsvd}, \link{bdsvd.ht}
-#'
-#' @references
-#' Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
-#'
-#' @examples
-#' #Replicate the simulation study (c) from Bauer (202X).
-#'
-#' require(mvtnorm)
-#'
-#' p <- 500 #Number of variables
-#' n <- 250 #Number of observations
-#' b <- 10  #Number of blocks
-#' design <- "c" #Simulation design "a", "b", "c", or "d".
-#'
-#' #Simulate data matrix X
-#' set.seed(1)
-#' Sigma <- cov.sim(p = p, b = b, design = design)
-#' X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
-#' colnames(X) <- 1:p
-#'
-#' iterative.bdsvd(X, standardize = FALSE)
-#'
-#' @importFrom irlba ssvd
-#'
-#' @export
-iterative.bdsvd <- function(X,
-                           dof.lim,
-                           standardize = TRUE,
-                           max.iter,
-                           trace = TRUE
-                           ) {
-
-  if(anyNA(X)){stop("X contains missing value indicator (NA)")}
-
-  n <- nrow(X)
-  p <- ncol(X)
-
-  if(length(colnames(X)) == 0){colnames(X) <- as.character(1:p)}
-
-  if(missing(dof.lim)){ dof.lim <- c(0,p-1) }
-  dof.lim <- sort(round(dof.lim))
-  if(dof.lim[1] < 0){ dof.lim[1] <- 0 }
-  if(dof.lim[2] > p-1){ dof.lim[2] <- p-1 }
-
-  if(missing(max.iter)){max.iter <- 500}
-
-  sub.matrices <- list(colnames(X))
-  results <- list()
-
-  b <- 1
-  while (TRUE) {
-    for (i in 1:length(sub.matrices)) {
-
-      if (length(sub.matrices) == 0) {
-        break  #Stop when splitting is no longer supported
-      }
-
-      if(length(sub.matrices[[1]]) == 1){
-        if(trace){
-          cat("Block", b,":", sub.matrices[[1]],"\n",sep="\t")
-        }
-        b <- b+1
-        results <- c(results, sub.matrices[[1]])
-        sub.matrices <- sub.matrices[-1]
-        next
-      }
-
-      dof.split <- bdsvd.ht(X = X[, colnames(X) %in% sub.matrices[[1]] ],
-                           dof.lim = dof.lim,
-                           standardize = standardize,
-                           max.iter = max.iter)$dof
-      sub.results <- bdsvd(X = X[, colnames(X) %in% sub.matrices[[1]] ], standardize = standardize, dof = dof.split)
-
-
-      if(length(sub.matrices) == 1){
-        sub.matrices <- list()
-      } else{
-        sub.matrices <- sub.matrices[-1]
-      }
-
-      if(length(sub.results) == 1){
-        if(trace){
-          cat("Block", b,":", sub.results[[1]],"\n",sep="\t")
-        }
-        b <- b+1
-        results <- c(results, sub.results)
-      }else{
-        sub.matrices <- c(sub.matrices, sub.results)
-      }
-
-    }
-    if (length(sub.matrices) == 0) {
-      break  #Stop when splitting is no longer supported
-    }
-
-  }
-
-  class(results) <- "bdsvd"
-  return(results)
-}
-
-
-
-
-
-#' @title Data Matrix Structure According to the Detected Block Structure.
-#'
-#' @description Sorts the data matrix \eqn{X} according to the detected block structure \eqn{X_1 , ... , X_b} and returns
-#' the detected submatrices individually.
-#'
-#' @param X Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.
-#'
-#' @param block.structure A user supplied block structure based on \code{iterative.bdsvd()} or \code{bdsvd()}.
-#'
-#' @param result Should the result be the data matrix ordered according to the blocks (\code{result == "matrix"}), or
-#' a list containing the submatrices (\code{result == "submatrices"}). Default is \code{matrix}.
-#'
-#' @param block.order A vector that contains the order of the blocks detected by \code{iterative.bdsvd()} or \code{.bdsvd()}.
-#' The vector must contain the index of each blocks exactly once. Default is \code{1:b} where \code{b} is the total number of blocks.
-#'
-#' @return
-#' Either the data matrix \code{X} with columns sorted according to the detected blocks, or a list containing the detected
-#' submatrices.
-#'
-#' @seealso \link{iterative.bdsvd}, \link{bdsvd}
-#'
-#' @references
-#' Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
-#'
-#' @examples
-#' #Toying with the illustrative example from Bauer (202X).
-#'
-#' require(mvtnorm)
-#'
-#' p <- 300 #Number of variables. In Bauer (202X), p = 3000.
-#' n <- 500 #Number of observations
-#' b <- 3   #Number of blocks
-#' design <- "c"
-#'
-#' #Simulate data matrix X
-#' set.seed(1)
-#' Sigma <- cov.sim(p = p, b = b, design = design)
-#' X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
-#' colnames(X) <- 1:p
-#'
-#' #Compute iterative BD-SVD
-#' bdsvd.obj <- iterative.bdsvd(X, standardize = FALSE)
-#'
-#' #Obtain the data matrix X, sorted by the detected blocks
-#' colnames(result.bdsvd(X, bdsvd.obj, result <- "matrix") )
-#' colnames(result.bdsvd(X, bdsvd.obj, result <- "matrix", block.order = c(2,1,3)) )
-#'
-#' #Obtain the detected submatrices X_1, X_2, and X_3
-#' colnames(result.bdsvd(X, bdsvd.obj, result <- "submatrices")[[1]] )
-#' colnames(result.bdsvd(X, bdsvd.obj, result <- "submatrices")[[2]] )
-#' colnames(result.bdsvd(X, bdsvd.obj, result <- "submatrices")[[3]] )
-#'
-#' @export
-result.bdsvd <- function(X,
-                         block.structure,
-                         result = c("matrix", "submatrices"),
-                         block.order
-                         ){
-
-  if(class(block.structure) != "bdsvd"){stop("block.structure must be the outcome of bdsvd() or iterative.bdsvd().")}
-
-  b <- length(block.structure)
-  ifelse(missing(block.order),
-         block.order <- 1:length(block.structure),
-         block.order <- as.integer(block.order) )
-  if(!identical(sort(block.order), 1:b)){stop("block.order must contain the index of each blocks exactly once.")}
-
-  result <- match.arg(result)
-  switch(result,
-         "matrix" = {
-           output <- X[, colnames(X) %in% block.structure[[block.order[1]]] ]
-           for(i in block.order[-1]){
-             output <- cbind.data.frame(output,  X[, colnames(X) %in% block.structure[[i]] ])
-           }
-         },
-         "submatrices" = {
-           output <- list()
-           for(i in block.order){
-             output <- c(output, list(X[, colnames(X) %in% block.structure[[block.order[i]]] ]) )
-           }
-         }
-  )
-
-  return(output)
-}
-
