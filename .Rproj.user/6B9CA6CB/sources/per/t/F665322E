@@ -1,0 +1,26 @@
+{
+    "id": "F665322E",
+    "path": "~/Documents/GitHub/bdsvd/tests/testthat/test-bdsvd.R",
+    "project_path": "tests/testthat/test-bdsvd.R",
+    "type": "r_source",
+    "hash": "484435015",
+    "contents": "",
+    "dirty": false,
+    "created": 1711556570583.0,
+    "source_on_save": false,
+    "relative_order": 6,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "14,33",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1711558597,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1711558597623,
+    "read_only": false,
+    "read_only_alternatives": []
+}

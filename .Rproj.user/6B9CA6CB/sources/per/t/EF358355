@@ -1,0 +1,26 @@
+{
+    "id": "EF358355",
+    "path": "~/Documents/GitHub/bdsvd/R/hcsvd.R",
+    "project_path": "R/hcsvd.R",
+    "type": "r_source",
+    "hash": "1245124977",
+    "contents": "",
+    "dirty": false,
+    "created": 1710768656583.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "230,54",
+        "scrollLine": "223"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1711560922,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1711560922984,
+    "read_only": false,
+    "read_only_alternatives": []
+}
