@@ -2,61 +2,61 @@
 % Please edit documentation in R/bdsvd.R
 \name{bdsvd}
 \alias{bdsvd}
-\title{Block detection using singular vectors (BD-SVD).}
+\title{Block Detection Using Singular Vectors (BD-SVD).}
 \usage{
-bdsvd(X, dof, standardize = TRUE, max.iter)
+bdsvd(X, dof.lim, standardize = TRUE, max.iter, trace = FALSE)
 }
 \arguments{
 \item{X}{Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.}
 
-\item{dof}{Number of non-zero components in the sparse loading (degrees of freedom). If
-\eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
-corresponds to the degrees of freedom.}
+\item{dof.lim}{Interval limits for the number of non-zero components in the sparse loading (degrees of freedom).
+If \eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
+corresponds to the degrees of freedom. Default is \code{dof.lim <- c(0, p-1)} which is highly recommended to check for
+all levels of sparsity.}
 
 \item{standardize}{Standardize the data to have unit variance. Default is \code{TRUE}.}
 
 \item{max.iter}{How many iterations should be performed for computing the sparse loading.
 Default is \code{200}.}
+
+\item{trace}{Print out progress as iterations are performed. Default is \code{TRUE}.}
 }
 \value{
-A list containing the feature names of the submatrices of \code{X}. It is either of length one (no
-split) or length two (split into two submatrices).
+A list containing the feature names of the submatrices of \code{X}. The length of the list equals
+the number of submatrices.
 }
 \description{
-Performs a single iteration of BD-SVD: splits the data matrix into one (i.e., no split)
-or two submatrices, depending on the structure of the first sparse loading \eqn{v} (sparse
-approximation of the first right singular vector, i.e., has many zero values) that mirrors the
-shape of the covariance matrix.
+Performs BD-SVD iteratively to reveal the block structure. Splits the data matrix into one (i.e., no split)
+or two submatrices, depending on the structure of the first sparse loading \eqn{v} (which is a sparse approximation of the
+first right singular vector, i.e., a vector with many zero values) that mirrors the shape of the covariance matrix. This
+procedure is continued iteratively until the block diagonal structure has been revealed.
+
+The data matrix ordered according to this revealed block diagonal structure can be obtained by \link{bdsvd.structure}.
 }
 \details{
 The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
 the \code{irlba} package.
 }
 \examples{
-#Replicate the illustrative example from Bauer (202X).
+#Replicate the simulation study (c) from Bauer (202Xa).
 
-require(mvtnorm)
-
-p <- 300 #Number of variables. In Bauer (202X), p = 3000.
-n <- 500 #Number of observations
-b <- 3   #Number of blocks
-design <- "c"
+p <- 500 #Number of variables
+n <- 250 #Number of observations
+b <- 10  #Number of blocks
+design <- "c" #Simulation design "a", "b", "c", or "d".
 
 #Simulate data matrix X
 set.seed(1)
-Sigma <- cov.sim(p = p, b = b, design = design)
-X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
+Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
 colnames(X) <- 1:p
 
-ht <- bdsvd.ht(X)
-plot(0:(p-1), ht$BIC[,1], xlab = "|S|", ylab = "HBIC", main = "", type = "l")
-bdsvd(X, dof = ht$dof, standardize = FALSE)
+bdsvd(X, standardize = FALSE)
 
 }
 \references{
-Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
-Shen, H. and Huang, J.Z. (2008). \emph{Sparse principal component analysis via regularized low rank matrix approximation}, \emph{J. Multivar. Anal. 99, 1015–1034.}, \if{html}{\out{<\doi{10.1016/j.jmva.2007.06.007}>}}\cr
+\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
 }
 \seealso{
-\link{bdsvd.ht}, \link{iterative.bdsvd}
+\link{bdsvd.structure}, \link{bdsvd.ht}, \link{single.bdsvd}
 }

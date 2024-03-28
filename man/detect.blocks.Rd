@@ -12,19 +12,19 @@ detect.blocks(V, threshold = 0)
 \item{threshold}{All absolute values of \code{V} below the threshold are set to zero.}
 }
 \value{
-An object of class Block containing the features and columns indices corresponding to each detected block.
+An object of class \code{Block} containing the features and columns indices corresponding to each detected block.
 }
 \description{
 This function returns the block structure of a matrix.
 }
 \examples{
 #In the first example, we replicate the simulation study for the ad hoc procedure
-#Est_0.1 in Bauer (202X). In the second example, we manually compute the first step
-#of BD-SVD, provided in the functions iterative.bdsvd() and/or bdsvd(), for constructed
+#Est_0.1 from Bauer (202Xa). In the second example, we manually compute the first step
+#of BD-SVD, which can be done using the bdsvd() and/or single.bdsvd(), for constructed
 #sparse loadings
 
-#Example 1: Replicate the simulation study (a) from Bauer (202X) for the ad hoc procedure Est_0.1.
-require(mvtnorm)
+#Example 1: Replicate the simulation study (a) from Bauer (202Xa) for the ad hoc
+#procedure Est_0.1.
 
 p <- 500 #Number of variables
 n <- 125 #Number of observations
@@ -33,18 +33,16 @@ design <- "a"
 
 #Simulate data matrix X
 set.seed(1)
-Sigma <- cov.sim(p = p, b = b, design = design)
-X <- rmvnorm(n, mean=rep(0,p), sigma=Sigma)
+Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
+X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
 colnames(X) <- 1:p
 
 #Perform the ad hoc procedure
-require(cvCovEst)
-detect.blocks(scadEst(dat = X, lambda = 0.2), threshold = 0)
+detect.blocks(cvCovEst::scadEst(dat = X, lambda = 0.2), threshold = 0)
 
 #Example 2: Manually compute the first step of BD-SVD
 #for some loadings V that mirror the two blocks
 #("A", "B") and c("C", "D").
-require(mvtnorm)
 
 V <- matrix(c(1,0,
               1,0,
@@ -64,8 +62,8 @@ detected.blocks[[2]]@block.columns
 
 }
 \references{
-Bauer, J.O. (202X). \emph{High-dimensional block diagonal covariance structure detection using singular vectors}\cr
+\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
 }
 \seealso{
-\link{bdsvd}, \link{iterative.bdsvd}
+\link{bdsvd}, \link{single.bdsvd}
 }
