@@ -3,7 +3,7 @@ create.block <- function(feature.names, selected.features, block.columns) {
   if (length(feature.names) > 0) {
     selected.features <- feature.names[selected.features]
   }
-  return(new("Block", features = selected.features, block.columns = block.columns))
+  return(new("block", features = selected.features, block.columns = block.columns))
 }
 
 get.blocks <- function(threshold.matrix, feature.names){
@@ -85,7 +85,7 @@ find.blocks <- function(matrix, column.idx) {
 #' @slot block.columns numeric vector that contains the indices of the
 #' singular vectors corresponding to this block.
 #' @export
-setClass("Block", slots = c(features = "vector", block.columns = "vector"))
+setClass("block", slots = c(features = "vector", block.columns = "vector"))
 
 
 
