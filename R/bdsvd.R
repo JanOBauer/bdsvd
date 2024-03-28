@@ -216,7 +216,7 @@ bdsvd <- function(X,
 
 
 
-#' @title Covariance matrix simulation for BD-SVD
+#' @title Covariance Matrix Simulation for BD-SVD
 #'
 #' @description This function generates covariance matrices based on the simulation studies described in Bauer (202Xa).
 #'
@@ -464,7 +464,7 @@ bdsvd.structure <- function(X,
                             block.order
 ){
 
-  if(class(block.structure) != "bdsvd")
+  if(!inherits(block.structure, "bdsvd"))
     stop("block.structure must be the outcome of bdsvd() or single.bdsvd().")
 
   OUTPUT <- c("matrix", "submatrices")

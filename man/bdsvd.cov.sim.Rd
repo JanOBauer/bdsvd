@@ -2,7 +2,7 @@
 % Please edit documentation in R/bdsvd.R
 \name{bdsvd.cov.sim}
 \alias{bdsvd.cov.sim}
-\title{Covariance matrix simulation for BD-SVD}
+\title{Covariance Matrix Simulation for BD-SVD}
 \usage{
 bdsvd.cov.sim(p = p, b, design = design)
 }
