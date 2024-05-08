@@ -59,7 +59,7 @@ hcsvd.ht <- function(X,
       cluster.reliability <- calc.reliability(X, R, p, reliability)
     }
 
-    return(list(cluster1 = cluster1, cluster2 = cluster2, cluster.reliability = cluster.reliability, k.p = -77))
+    return(list(cluster1 = cluster1, cluster2 = cluster2, cluster.reliability = cluster.reliability, k.p = NA))
   }
 
 
@@ -133,7 +133,7 @@ hcsvd.cor.sim <- function(p = p,
 
   DESIGN <- c("a", "b")
   if (!(design %in% DESIGN))
-    stop("invalid design", paste("", design))
+    stop(paste(design), " is an invalid design")
 
   if(design == "a"){
     d <- p/b/4
@@ -223,6 +223,11 @@ hcsvd.cor.sim <- function(p = p,
 #' \item{u.cor}{
 #'  The ultrametric correlation matrix of \eqn{X} obtained by HC-SVD as an object of class \code{matrix}.
 #' }
+#' \item{k.p}{
+#'  A vector of length \eqn{p-1} containing the ratio \eqn{k_i/p_i} of the \eqn{k_i} sparse loadings used relative to all sparse
+#'  loadings \eqn{p_i} for the split of each cluster. The ratio is set to \code{NA} if the cluster contains only two variables as the search
+#'  for sparse loadings that reflect the split is not required in this case.}.
+#' }
 #'
 #' @references \cite{Bauer, J.O. (202Xb). Hierarchical variable clustering using singular vectors.}
 #' @references \cite{Shen, H. and Huang, J.Z. (2008). Sparse principal component analysis via regularized low rank matrix approximation, J. Multivar. Anal. 99, 1015–1034.}
@@ -261,20 +266,20 @@ hcsvd <- function(X,
     stop("X contains missing value indicator (NA)")
   }
 
-  K <- c("p", "Kaiser")
+  K <- c("all", "Kaiser")
   if (!(k %in% K))
-    stop("invalid command for k", paste("", linkage))
+    stop(paste(k), " is an invalid argument for k")
 
   LINKAGE <- c("average", "single", "RV")
   if (!(linkage %in% LINKAGE))
-    stop("invalid linkage function", paste("", linkage))
+    stop(paste(linkage), " is an invalid linkage function")
 
   if(missing(reliability)){
     reliability <- "linkage"
   } else{
     RELIABILITY <- c("spectral")
     if (!(reliability %in% RELIABILITY))
-      stop("invalid internal consistency reliability ", paste("", reliability))
+      stop(paste(reliability), " is an invalid argument for internal consistency reliability")
   }
 
   if(missing(max.iter)){max.iter <- 500}

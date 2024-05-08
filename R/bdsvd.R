@@ -245,7 +245,7 @@ bdsvd.cov.sim <- function(p = p,
 
   DESIGN <- c("a", "b", "c", "d")
   if (!(design %in% DESIGN))
-    stop("invalid design", paste("", design))
+    stop(paste(design), " is an invalid design")
 
   if(design == "a"){
     Sigma <- diag(1, p, p)
@@ -449,13 +449,13 @@ bdsvd.ht <- function(X,
 #' bdsvd.obj <- bdsvd(X, standardize = FALSE)
 #'
 #' #Obtain the data matrix X, sorted by the detected blocks
-#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "matrix") )
-#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "matrix", block.order = c(2,1,3)) )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output = "matrix") )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output = "matrix", block.order = c(2,1,3)) )
 #'
 #' #Obtain the detected submatrices X_1, X_2, and X_3
-#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[1]] )
-#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[2]] )
-#' colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[3]] )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[1]] )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[2]] )
+#' colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[3]] )
 #'
 #' @export
 bdsvd.structure <- function(X,
@@ -469,7 +469,7 @@ bdsvd.structure <- function(X,
 
   OUTPUT <- c("matrix", "submatrices")
   if (!(output %in% OUTPUT))
-    stop("invalid command for output", paste("", output))
+    stop(paste(output), " is an invalid argument for output")
 
   p <- ncol(X)
   if(length(colnames(X)) == 0){colnames(X) <- as.character(1:p)}
