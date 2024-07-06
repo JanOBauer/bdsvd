@@ -4,7 +4,7 @@
 \alias{bdsvd}
 \title{Block Detection Using Singular Vectors (BD-SVD).}
 \usage{
-bdsvd(X, dof.lim, standardize = TRUE, max.iter, trace = FALSE)
+bdsvd(X, dof.lim, anp = "2", standardize = TRUE, max.iter, trace = FALSE)
 }
 \arguments{
 \item{X}{Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.}
@@ -13,6 +13,10 @@ bdsvd(X, dof.lim, standardize = TRUE, max.iter, trace = FALSE)
 If \eqn{S} denotes the support of \eqn{v}, then the cardinality of the support, \eqn{|S|},
 corresponds to the degrees of freedom. Default is \code{dof.lim <- c(0, p-1)} which is highly recommended to check for
 all levels of sparsity.}
+
+\item{anp}{Which regularization function should be used for the HBIC. \code{anp = "1"} implements \eqn{a_{np} = 1} which corresponds
+to the BIC, \code{anp = "2"} implements \eqn{a_{np} = 1/2 log(np)} which corresponds to the regularization used by Bauer (202Xa), and \code{anp = "3"}
+implements \eqn{a_{np} = log(log(np))} which corresponds to the regularization used by Wang et al. (2009) and Wang et al. (2013).}
 
 \item{standardize}{Standardize the data to have unit variance. Default is \code{TRUE}.}
 
@@ -49,13 +53,17 @@ design <- "c" #Simulation design "a", "b", "c", or "d".
 set.seed(1)
 Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
 X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
-colnames(X) <- 1:p
+colnames(X) <- seq_len(p)
 
 bdsvd(X, standardize = FALSE)
 
 }
 \references{
 \cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+
+\cite{Wang, H., B. Li, and C. Leng (2009). Shrinkage tuning parameter selection with a diverging number of parameters, J. R. Stat. Soc. B 71 (3), 671–683.}
+
+\cite{Wang, L., Y. Kim, and R. Li (2013). Calibrating nonconvex penalized regression in ultra-high dimension, Ann. Stat. 41 (5), 2505–2536.}
 }
 \seealso{
 \link{bdsvd.structure}, \link{bdsvd.ht}, \link{single.bdsvd}
