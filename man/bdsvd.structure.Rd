@@ -29,7 +29,7 @@ of variables that the blocks contain. Or returns the detected submatrices each i
 #Toying with the illustrative example from Bauer (202Xa).
 
 
-p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
+p <- 150 #Number of variables. In Bauer (202Xa), p = 3000.
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
 design <- "c"

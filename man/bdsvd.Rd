@@ -44,6 +44,7 @@ the \code{irlba} package.
 \examples{
 #Replicate the simulation study (c) from Bauer (202Xa).
 
+\dontrun{
 p <- 500 #Number of variables
 n <- 250 #Number of observations
 b <- 10  #Number of blocks
@@ -56,6 +57,7 @@ X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
 colnames(X) <- seq_len(p)
 
 bdsvd(X, standardize = FALSE)
+}
 
 }
 \references{

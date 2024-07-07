@@ -35,6 +35,8 @@ the \code{irlba} package.
 \examples{
 #Replicate the illustrative example from Bauer (202Xa).
 
+\dontrun{
+
 p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
@@ -49,6 +51,8 @@ colnames(X) <- 1:p
 ht <- bdsvd.ht(X)
 plot(0:(p-1), ht$BIC[,1], xlab = "|S|", ylab = "HBIC", main = "", type = "l")
 single.bdsvd(X, dof = ht$dof, standardize = FALSE)
+
+}
 
 }
 \references{

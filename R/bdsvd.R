@@ -132,6 +132,7 @@ setClass("block", slots = c(features = "vector", block.columns = "vector"))
 #' @examples
 #' #Replicate the simulation study (c) from Bauer (202Xa).
 #'
+#' \dontrun{
 #' p <- 500 #Number of variables
 #' n <- 250 #Number of observations
 #' b <- 10  #Number of blocks
@@ -144,6 +145,7 @@ setClass("block", slots = c(features = "vector", block.columns = "vector"))
 #' colnames(X) <- seq_len(p)
 #'
 #' bdsvd(X, standardize = FALSE)
+#' }
 #'
 #' @importFrom irlba ssvd
 #'
@@ -490,7 +492,7 @@ bdsvd.ht <- function(X,
 #' #Toying with the illustrative example from Bauer (202Xa).
 #'
 #'
-#' p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
+#' p <- 150 #Number of variables. In Bauer (202Xa), p = 3000.
 #' n <- 500 #Number of observations
 #' b <- 3   #Number of blocks
 #' design <- "c"
@@ -672,6 +674,8 @@ detect.blocks <- function(V,
 #' @examples
 #' #Replicate the illustrative example from Bauer (202Xa).
 #'
+#' \dontrun{
+#'
 #' p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
 #' n <- 500 #Number of observations
 #' b <- 3   #Number of blocks
@@ -686,6 +690,8 @@ detect.blocks <- function(V,
 #' ht <- bdsvd.ht(X)
 #' plot(0:(p-1), ht$BIC[,1], xlab = "|S|", ylab = "HBIC", main = "", type = "l")
 #' single.bdsvd(X, dof = ht$dof, standardize = FALSE)
+#'
+#' }
 #'
 #' @importFrom irlba ssvd
 #'

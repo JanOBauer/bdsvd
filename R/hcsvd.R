@@ -234,18 +234,21 @@ hcsvd.cor.sim <- function(p = p,
 #'
 #' @examples
 #' #We replicate the simulation study in Bauer (202Xb)
+#'
+#' \dontrun{
 #' p <- 100
 #' n <- 300
 #' b <- 5
 #' design <- "a"
 #'
-#' Rho <- hcsvd.cor.sim(p = 100, b = 5, design = "a")
+#' Rho <- hcsvd.cor.sim(p = p, b = b, design = "a")
 #' X <- scale(mvtnorm::rmvnorm(300, mean=rep(0,100), sigma=Rho, checkSymmetry = FALSE))
 #' colnames(X) = 1:ncol(X)
 #' hcsvd.obj <- hcsvd(X, k = "Kaiser")
 #'
 #' #The dendrogram can be obtained from the ultrametric distance matrix:
 #' plot(hclust(hcsvd.obj$dist.matrix))
+#' }
 #'
 #'
 #' @importFrom irlba ssvd
