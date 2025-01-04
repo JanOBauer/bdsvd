@@ -4,22 +4,28 @@
 \alias{hcsvd}
 \title{Hierarchical Variable Clustering Using Singular Vectors (HC-SVD).}
 \usage{
-hcsvd(X, k = "all", linkage = "single", reliability, R, max.iter, trace = TRUE)
+hcsvd(
+  R,
+  k = "Kaiser",
+  linkage = "average",
+  is.corr = TRUE,
+  max.iter,
+  trace = TRUE
+)
 }
 \arguments{
-\item{X}{Data matrix of dimension \eqn{n x p}. The data matrix is standardized during the analysis by \code{hcsvd}.}
+\item{R}{A correlation matrix of dimension \eqn{p x p} or a data matrix of dimension \eqn{n x p} an be provided. If a data matrix is supplied, it must be indicated by setting
+\code{is.corr = FALSE}, and the correlation matrix will then be calculated as \code{cor(X)}.}
 
-\item{k}{Number of sparse loadings to be used. This should be \code{"all"} for all sparse loadings, or \code{"Kaiser"} for as many sparse loadings as
-there are eigenvalues larger or equal to one (see Bauer (202Xb) for details). Selecting \code{"Kaiser"} reduces computation time.}
+\item{k}{Number of sparse loadings to be used. This should be either a numeric value between zero and one to indicate percentages, or \code{"Kaiser"} for as many sparse loadings as
+there are eigenvalues larger or equal to one. For a numerical value between zero and one, the number of sparse loadings is determined as the corresponding share of the total number of loadings.
+E.g., \code{k = 1} (100\%) will use all sparse loadings (see Bauer (202X) for details).}
 
 \item{linkage}{The linkage function to be used. This should be one of \code{"average"}, \code{"single"}, or
 \code{"RV"} (for RV-coefficient).}
 
-\item{reliability}{By default, the value of each cluster equals the distance calculated by the chosen linkage function.
-If preferred, the value of each cluster can be assigned by its reliability. When \code{reliability = spectral}, the reliability is
-calculated by the averaged spectral norm.}
-
-\item{R}{Sample correlation matrix of \code{X}. By default, \code{R <- cov(X)}.}
+\item{is.corr}{Is the supplied object a correlation matrix. Default is \code{TRUE} and this parameter must be set to \code{FALSE} is
+a data matrix instead of a correlation matrix is supplied.}
 
 \item{max.iter}{How many iterations should be performed for computing the sparse loadings.
 Default is \code{200}.}
@@ -28,7 +34,10 @@ Default is \code{200}.}
 Default is \code{TRUE}.}
 }
 \value{
-A list with two components:
+A list with four components:
+\item{hclust}{
+The clustering structure identified by HC-SVD as an object of type \code{hclust}.
+}
 \item{dist.matrix}{
 The ultrametric distance matrix (cophenetic matrix) of the HC-SVD structure as an object of class \code{dist}.
 }
@@ -42,36 +51,41 @@ for sparse loadings that reflect the split is not required in this case.
 }
 }
 \description{
-Performs HC-SVD to reveal the hierarchical variable structure as descried in Bauer (202Xb). For this divise approach, each cluster is split into two clusters iteratively. Potential splits
-are identified by the first sparse loadings (which are sparse approximations of the first right singular vectors, i.e., vectors with many zero values) that
+Performs HC-SVD to reveal the hierarchical variable structure as descried in Bauer (202X). For this divise approach, each cluster is split into two clusters iteratively. Potential splits
+are identified by the first sparse loadings (which are sparse approximations of the first right eigenvectors, i.e., vectors with many zero values, of the correlation matrix) that
 mirror the masked shape of the correlation matrix. This procedure is continued until each variable lies in a single cluster.
 }
 \details{
-The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
-the \code{irlba} package.
+The sparse loadings are computed using the method of Shen and Huang (2008), which is implemented based on the code
+of Baglama, Reichel, and Lewis in \link[irlba]{ssvd} \{\link[=irlba]{irlba}\}, with slight modifications to suit our method.
 }
 \examples{
-#We replicate the simulation study in Bauer (202Xb)
+#We replicate the simulation study in Bauer (202X)
 
 \dontrun{
-p <- 100
-n <- 300
+p <- 20
+n <- 500
 b <- 5
 design <- "a"
 
 Rho <- hcsvd.cor.sim(p = p, b = b, design = "a")
-X <- scale(mvtnorm::rmvnorm(300, mean=rep(0,100), sigma=Rho, checkSymmetry = FALSE))
-colnames(X) = 1:ncol(X)
-hcsvd.obj <- hcsvd(X, k = "Kaiser")
+X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma = Rho, checkSymmetry = FALSE)
+R <- cor(X)
+hcsvd.obj <- hcsvd(R)
 
-#The dendrogram can be obtained from the ultrametric distance matrix:
+#The object of hclust with corresponding dendrogram can be obtained
+#directly from hcsvd.obj$hclust:
+hc <- hcsvd.obj$hclust
+plot(hc)
+
+#The dendrogram can also be obtained from the ultrametric distance matrix:
 plot(hclust(hcsvd.obj$dist.matrix))
 }
 
 
 }
 \references{
-\cite{Bauer, J.O. (202Xb). Hierarchical variable clustering using singular vectors.}
+\cite{Bauer, J.O. (202X). Divisive hierarchical clustering identified by singular vectors.}
 
 \cite{Shen, H. and Huang, J.Z. (2008). Sparse principal component analysis via regularized low rank matrix approximation, J. Multivar. Anal. 99, 1015–1034.}
 }

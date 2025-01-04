@@ -26,10 +26,10 @@ Either sorts the data matrix \eqn{X} according to the detected block structure \
 of variables that the blocks contain. Or returns the detected submatrices each individually in a list object.
 }
 \examples{
-#Toying with the illustrative example from Bauer (202Xa).
+#Toying with the illustrative example from Bauer (2024).
 
 
-p <- 150 #Number of variables. In Bauer (202Xa), p = 3000.
+p <- 150 #Number of variables. In Bauer (2024), p = 3000.
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
 design <- "c"
@@ -54,7 +54,7 @@ colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[3]] )
 
 }
 \references{
-\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+\cite{Bauer, J.O. (2024). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat.}
 }
 \seealso{
 \link{bdsvd}, \link{single.bdsvd}

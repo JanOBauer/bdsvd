@@ -17,7 +17,7 @@ all levels of sparsity.}
 \item{standardize}{Standardize the data to have unit variance. Default is \code{TRUE}.}
 
 \item{anp}{Which regularization function should be used for the HBIC. \code{anp = "1"} implements \eqn{a_{np} = 1} which corresponds
-to the BIC, \code{anp = "2"} implements \eqn{a_{np} = 1/2 log(np)} which corresponds to the regularization used by Bauer (202Xa), and \code{anp = "3"}
+to the BIC, \code{anp = "2"} implements \eqn{a_{np} = 1/2 log(np)} which corresponds to the regularization used by Bauer (2024), and \code{anp = "3"}
 implements \eqn{a_{np} = log(log(np))} which corresponds to the regularization used by Wang et al. (2009) and Wang et al. (2013).}
 
 \item{max.iter}{How many iterations should be performed for computing the sparse loading.
@@ -37,13 +37,13 @@ Bayesian information criterion (HBIC).
 }
 \details{
 The sparse loadings are computed using the method by Shen & Huang (2008), implemented in
-the \code{irlba} package. The computation of the HBIC is outlined in Bauer (202Xa).
+the \code{irlba} package. The computation of the HBIC is outlined in Bauer (2024).
 }
 \examples{
-#Replicate the illustrative example from Bauer (202Xa).
+#Replicate the illustrative example from Bauer (2024).
 
 
-p <- 300 #Number of variables. In Bauer (202Xa), p = 3000
+p <- 300 #Number of variables. In Bauer (2024), p = 3000
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
 design <- "c"
@@ -60,7 +60,7 @@ single.bdsvd(X, dof = ht$dof, standardize = FALSE)
 
 }
 \references{
-\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+\cite{Bauer, J.O. (2024). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat.}
 
 \cite{Shen, H. and Huang, J.Z. (2008). Sparse principal component analysis via regularized low rank matrix approximation, J. Multivar. Anal. 99, 1015–1034.}
 

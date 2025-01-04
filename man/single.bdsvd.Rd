@@ -33,11 +33,11 @@ The sparse loadings are computed using the method by Shen & Huang (2008), implem
 the \code{irlba} package.
 }
 \examples{
-#Replicate the illustrative example from Bauer (202Xa).
+#Replicate the illustrative example from Bauer (2024).
 
 \dontrun{
 
-p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
+p <- 300 #Number of variables. In Bauer (2024), p = 3000.
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
 design <- "c"
@@ -56,7 +56,7 @@ single.bdsvd(X, dof = ht$dof, standardize = FALSE)
 
 }
 \references{
-\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+\cite{Bauer, J.O. (2024). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat.}
 
 \cite{Shen, H. and Huang, J.Z. (2008). Sparse principal component analysis via regularized low rank matrix approximation, J. Multivar. Anal. 99, 1015–1034.}
 }

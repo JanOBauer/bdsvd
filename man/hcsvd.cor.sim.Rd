@@ -17,13 +17,13 @@ hcsvd.cor.sim(p = p, b = b, design = design)
 A correlation matrix according to the chosen simulation design.
 }
 \description{
-This function generates correlation matrices based on the simulation studies described in Bauer (202Xb).
+This function generates correlation matrices based on the simulation studies described in Bauer (202X).
 }
 \examples{
 #The correlation matrix for simulation design (a) is given by
-#R <- hcsvd.cov.sim(p = 100, b = 5, design = "a")
+#R <- hcsvd.cov.sim(p = 40, b = 5, design = "a")
 
 }
 \references{
-\cite{Bauer, J.O. (202Xb). Hierarchical variable clustering using singular vectors.}
+\cite{Bauer, J.O. (202X). Divisive hierarchical clustering identified by singular vectors.}
 }
