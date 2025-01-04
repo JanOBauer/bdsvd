@@ -9,7 +9,7 @@ bdsvd.structure(X, block.structure, output = "matrix", block.order)
 \arguments{
 \item{X}{Data matrix of dimension \eqn{n x p} with possibly \eqn{p >> n}.}
 
-\item{block.structure}{A user supplied block structure based on \code{bdsvd()} or \code{single.bdsvd()}.}
+\item{block.structure}{Output of \code{bdsvd()} or \code{single.bdsvd()} which identified the block structure.}
 
 \item{output}{Should the output be the data matrix ordered according to the blocks (\code{"matrix"}), or
 a list containing the submatrices (\code{"submatrices"}). Default is \code{"matrix"}.}
@@ -26,10 +26,10 @@ Either sorts the data matrix \eqn{X} according to the detected block structure \
 of variables that the blocks contain. Or returns the detected submatrices each individually in a list object.
 }
 \examples{
-#Toying with the illustrative example from Bauer (202Xa).
+#Toying with the illustrative example from Bauer (2024).
 
 
-p <- 300 #Number of variables. In Bauer (202Xa), p = 3000.
+p <- 150 #Number of variables. In Bauer (2024), p = 3000.
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
 design <- "c"
@@ -38,23 +38,23 @@ design <- "c"
 set.seed(1)
 Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
 X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
-colnames(X) <- 1:p
+colnames(X) <- seq_len(p)
 
 #Compute iterative BD-SVD
 bdsvd.obj <- bdsvd(X, standardize = FALSE)
 
 #Obtain the data matrix X, sorted by the detected blocks
-colnames(bdsvd.structure(X, bdsvd.obj, output <- "matrix") )
-colnames(bdsvd.structure(X, bdsvd.obj, output <- "matrix", block.order = c(2,1,3)) )
+colnames(bdsvd.structure(X, bdsvd.obj, output = "matrix") )
+colnames(bdsvd.structure(X, bdsvd.obj, output = "matrix", block.order = c(2,1,3)) )
 
 #Obtain the detected submatrices X_1, X_2, and X_3
-colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[1]] )
-colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[2]] )
-colnames(bdsvd.structure(X, bdsvd.obj, output <- "submatrices")[[3]] )
+colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[1]] )
+colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[2]] )
+colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[3]] )
 
 }
 \references{
-\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+\cite{Bauer, J.O. (2024). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat.}
 }
 \seealso{
 \link{bdsvd}, \link{single.bdsvd}

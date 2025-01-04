@@ -17,7 +17,7 @@ bdsvd.cov.sim(p = p, b, design = design)
 A covariance matrix according to the chosen simulation design.
 }
 \description{
-This function generates covariance matrices based on the simulation studies described in Bauer (202Xa).
+This function generates covariance matrices based on the simulation studies described in Bauer (2024).
 }
 \examples{
 #The covariance matrix for simulation design (a) is given by
@@ -25,5 +25,5 @@ Sigma <- bdsvd.cov.sim(p = 500, b = 500, design = "a")
 
 }
 \references{
-\cite{Bauer, J.O. (202Xa). High-dimensional block diagonal covariance structure detection using singular vectors.}
+\cite{Bauer, J.O. (2024). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat.}
 }

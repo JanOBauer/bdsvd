@@ -1,12 +1,12 @@
 Package: bdsvd
 Type: Package
 Title: Block Structure Detection Using Singular Vectors
-Version: 0.1-0
+Version: 0.2.0
 Authors@R: c(
     person(given = "Jan O.", family = "Bauer", email = "j.bauer@vu.nl", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7123-4507")),
     person(given = "Ron", family = "Holzapfel", email = "", role = "aut"))
 Maintainer: Jan O. Bauer <j.bauer@vu.nl>
-Description: Performs block diagonal covariance matrix detection using singular vectors (BD-SVD), which can be extended to hierarchical variable clustering (HC-SVD). The methods are described in Bauer (202Xa) <arXiv:2211.16155> and Bauer (202Xb) <arXiv:2308.06820>.
+Description: Performs block diagonal covariance matrix detection using singular vectors (BD-SVD), which can be extended to hierarchical variable clustering (HC-SVD). The methods are described in Bauer (202Xa) <doi:10.48550/arXiv.2211.16155> and Bauer (202Xb) <doi:10.48550/arXiv.2308.06820>.
 License: GPL (>= 2)
 Imports: irlba, methods, stats
 Encoding: UTF-8
