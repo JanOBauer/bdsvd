@@ -7,10 +7,10 @@ test_that("block detection works",{
   rownames(V) <- c("A", "B", "C", "D")
   detected.blocks <- detect.blocks(V)
 
-  expect_equal(detected.blocks[[1]]@features, c("A", "B"))
-  expect_equal(detected.blocks[[1]]@block.columns, 1)
-  expect_equal(detected.blocks[[2]]@features, c("C", "D"))
-  expect_equal(detected.blocks[[2]]@block.columns, 2)
+  expect_equal(detected.blocks[[1]]$features, c("A", "B"))
+  expect_equal(detected.blocks[[1]]$block.columns, 1)
+  expect_equal(detected.blocks[[2]]$features, c("C", "D"))
+  expect_equal(detected.blocks[[2]]$block.columns, 2)
 
   expect_error(detect.blocks(V, 1.5) )
   expect_error(detect.blocks(V, 2.5) )

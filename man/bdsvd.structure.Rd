@@ -26,10 +26,10 @@ Either sorts the data matrix \eqn{X} according to the detected block structure \
 of variables that the blocks contain. Or returns the detected submatrices each individually in a list object.
 }
 \examples{
-#Toying with the illustrative example from Bauer (2024).
+#Toying with the illustrative example from Bauer (2025).
 
 
-p <- 150 #Number of variables. In Bauer (2024), p = 3000.
+p <- 150 #Number of variables. In Bauer (2025), p = 3000.
 n <- 500 #Number of observations
 b <- 3   #Number of blocks
 design <- "c"
@@ -37,7 +37,7 @@ design <- "c"
 #Simulate data matrix X
 set.seed(1)
 Sigma <- bdsvd.cov.sim(p = p, b = b, design = design)
-X <- mvtnorm::rmvnorm(n, mean=rep(0, p), sigma=Sigma)
+X <- mvtnorm::rmvnorm(n, mean = rep(0, p), sigma = Sigma)
 colnames(X) <- seq_len(p)
 
 #Compute iterative BD-SVD
@@ -54,8 +54,8 @@ colnames(bdsvd.structure(X, bdsvd.obj, output = "submatrices")[[3]] )
 
 }
 \references{
-\cite{Bauer, J.O. (2024). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat.}
+\cite{Bauer, J.O. (2025). High-dimensional block diagonal covariance structure detection using singular vectors, J. Comput. Graph. Stat., 34(3), 1005–1016}
 }
 \seealso{
-\link{bdsvd}, \link{single.bdsvd}
+\code{\link{bdsvd}}, \code{\link{single.bdsvd}}
 }
